@@ -14,6 +14,7 @@ class ReservationService
 {
     /**
      * Get all reservations for the authenticated user.
+     * @return Collection<int, Reservation>
      */
     public function getUserReservations()
     {
@@ -29,6 +30,8 @@ class ReservationService
 
     /**
      * Get all reservations for a specific event.
+     * @param \App\Models\Event $event
+     * @return Collection<int, Reservation>
      */
     public function getEventReservations(Event $event)
     {
@@ -40,6 +43,8 @@ class ReservationService
 
     /**
      * Create a new reservation.
+     * @param \App\Http\Requests\Reservation\StoreReservationRequest $request
+     * @return \App\Models\Reservation
      */
     public function create(StoreReservationRequest $request): Reservation
     {
@@ -63,6 +68,9 @@ class ReservationService
 
     /**
      * Update an existing reservation.
+     * @param \App\Http\Requests\Reservation\UpdateReservationRequest $request
+     * @param \App\Models\Reservation $reservation
+     * @return Reservation
      */
     public function update(UpdateReservationRequest $request, Reservation $reservation): Reservation
     {
@@ -88,6 +96,9 @@ class ReservationService
 
     /**
      * Cancel (delete) a reservation.
+     * @param \App\Models\Reservation $reservation
+     * @throws \Exception
+     * @return void
      */
     public function cancel(Reservation $reservation): void
     {
@@ -102,8 +113,10 @@ class ReservationService
 
     /**
      * Check if user has already reserved for an event.
+     * @param mixed $event
+     * @return bool
      */
-    public function hasUserReserved(Event $event): bool
+    public function hasUserReserved($event): bool
     {
         return Reservation::where('event_id', $event->id)
             ->where('user_id', Auth::id())
@@ -112,6 +125,8 @@ class ReservationService
 
     /**
      * Get the most popular events based on reservation count.
+     * @param int $limit
+     * @return Collection<int, Event>
      */
     public function getPopularEvents(int $limit = 5)
     {
@@ -125,6 +140,8 @@ class ReservationService
 
     /**
      * Get events with available spots.
+     * @param int $limit
+     * @return Collection<int, Event>
      */
     public function getEventsWithAvailableSpots(int $limit = 10)
     {

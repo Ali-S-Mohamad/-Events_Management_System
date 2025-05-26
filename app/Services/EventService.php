@@ -11,9 +11,9 @@ use Illuminate\Database\Eloquent\Builder;
 class EventService
 {
     protected ImageService $imageService;
-
     /**
      * Create a new service instance.
+     * @param \App\Services\ImageService $imageService
      */
     public function __construct(ImageService $imageService)
     {
@@ -22,6 +22,8 @@ class EventService
 
     /**
      * Get a paginated list of events with optional filters.
+     * @param array $filters
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function list(array $filters = [])
     {
@@ -77,6 +79,8 @@ class EventService
 
     /**
      * Get a single event with its relationships.
+     * @param \App\Models\Event $event
+     * @return Event
      */
     public function show(Event $event)
     {
@@ -91,6 +95,8 @@ class EventService
 
     /**
      * Create a new event.
+     * @param \Illuminate\Http\Request $request
+     * @return Event
      */
     public function create(Request $request): Event
     {
@@ -120,6 +126,9 @@ class EventService
 
     /**
      * Update an existing event.
+     * @param \App\Models\Event $event
+     * @param \Illuminate\Http\Request $request
+     * @return Event
      */
     public function update(Event $event, Request $request): Event
     {
@@ -144,6 +153,8 @@ class EventService
 
     /**
      * Delete an event and its related resources.
+     * @param \App\Models\Event $event
+     * @return void
      */
     public function delete(Event $event): void
     {
@@ -158,6 +169,8 @@ class EventService
 
     /**
      * Set a cover image for the event.
+     * @param \App\Models\Event $event
+     * @param int $imageId
      */
     public function setCoverImage(Event $event, int $imageId)
     {
@@ -166,6 +179,8 @@ class EventService
 
     /**
      * Get upcoming events.
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection<int, Event>
      */
     public function getUpcomingEvents(int $limit = 5)
     {
@@ -179,6 +194,9 @@ class EventService
 
     /**
      * Get events by type.
+     * @param int $typeId
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection<int, Event>
      */
     public function getEventsByType(int $typeId, int $limit = 10)
     {
@@ -192,6 +210,9 @@ class EventService
 
     /**
      * Get events by location.
+     * @param int $locationId
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection<int, Event>
      */
     public function getEventsByLocation(int $locationId, int $limit = 10)
     {

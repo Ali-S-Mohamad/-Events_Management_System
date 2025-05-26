@@ -20,6 +20,10 @@ class EventTypeController extends Controller
         $this->eventTypeService = $eventTypeService;
     }
 
+    /**
+     * Summary of middleware
+     * @return string[]
+     */
     public static function middleware(): array
     {
         return [
@@ -27,8 +31,10 @@ class EventTypeController extends Controller
             'role:admin'
         ];
     }
+
     /**
      * Display a listing of the resource.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
@@ -38,6 +44,8 @@ class EventTypeController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * @param \App\Http\Requests\EventType\StoreEventTypeRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreEventTypeRequest $request)
     {
@@ -51,6 +59,8 @@ class EventTypeController extends Controller
 
     /**
      * Display the specified resource.
+     * @param \App\Models\EventType $eventType
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(EventType $eventType)
     {
@@ -60,6 +70,9 @@ class EventTypeController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * @param \App\Http\Requests\EventType\UpdateEventTypeRequest $request
+     * @param \App\Models\EventType $eventType
+     * @return mixed|\Illuminate\Http\JsonResponse
      */
     public function update(UpdateEventTypeRequest $request, EventType $eventType)
     {
@@ -72,6 +85,8 @@ class EventTypeController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * @param \App\Models\EventType $eventType
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(EventType $eventType)
     {

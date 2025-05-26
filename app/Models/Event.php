@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Event extends Model
 {
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
     protected $fillable = [
         'title',
         'description',
@@ -19,8 +24,18 @@ class Event extends Model
         'user_id'
     ];
 
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array<string>
+     */
     protected $dates = ['starts_at', 'ends_at'];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
@@ -28,6 +43,9 @@ class Event extends Model
 
     /**
      * The "booted" method of the model.
+     * Automatically sets the user_id to the authenticated user when creating a new event.
+     *
+     * @return void
      */
     protected static function booted()
     {
@@ -41,6 +59,8 @@ class Event extends Model
 
     /**
      * Get the user that owns the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
     {
@@ -49,6 +69,8 @@ class Event extends Model
 
     /**
      * Get the event type of the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function eventType()
     {
@@ -57,6 +79,8 @@ class Event extends Model
 
     /**
      * Get the location of the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function location()
     {
@@ -65,6 +89,8 @@ class Event extends Model
 
     /**
      * Get the reservations for the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function reservations()
     {
@@ -73,6 +99,8 @@ class Event extends Model
 
     /**
      * Get the latest reservation for the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function latestReservation()
     {
@@ -81,6 +109,8 @@ class Event extends Model
 
     /**
      * Get the oldest reservation for the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function oldestReservation()
     {
@@ -89,6 +119,8 @@ class Event extends Model
 
     /**
      * Get the reservation with the most guests.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function largestReservation()
     {
@@ -98,6 +130,8 @@ class Event extends Model
     /**
      * Check if the event is fully booked.
      * Assuming a maximum capacity of 50 attendees.
+     *
+     * @return bool
      */
     public function isFullyBooked(): bool
     {
@@ -107,6 +141,8 @@ class Event extends Model
     /**
      * Get the number of available spots.
      * Assuming a maximum capacity of 50 attendees.
+     *
+     * @return int
      */
     public function availableSpots(): int
     {
@@ -116,6 +152,8 @@ class Event extends Model
 
     /**
      * Get all images for the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function images()
     {
@@ -124,6 +162,8 @@ class Event extends Model
 
     /**
      * Get the cover image for the event.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
      */
     public function coverImage(): MorphOne
     {
@@ -134,6 +174,10 @@ class Event extends Model
 
     /**
      * Scope a query to only include upcoming events.
+     * Filters events where start date is in the future.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return void
      */
     public function scopeUpcoming(Builder $query): void
     {
@@ -142,6 +186,10 @@ class Event extends Model
 
     /**
      * Scope a query to only include past events.
+     * Filters events where end date is in the past.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return void
      */
     public function scopePast(Builder $query): void
     {
@@ -150,6 +198,10 @@ class Event extends Model
 
     /**
      * Scope a query to only include events of a specific type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $typeId
+     * @return void
      */
     public function scopeOfType(Builder $query, $typeId): void
     {
@@ -158,6 +210,10 @@ class Event extends Model
 
     /**
      * Scope a query to only include events at a specific location.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $locationId
+     * @return void
      */
     public function scopeAtLocation(Builder $query, $locationId): void
     {
@@ -166,6 +222,9 @@ class Event extends Model
 
     /**
      * Check if the event is upcoming.
+     * An event is upcoming if its start date is in the future.
+     *
+     * @return bool
      */
     public function isUpcoming(): bool
     {
@@ -174,6 +233,9 @@ class Event extends Model
 
     /**
      * Check if the event is ongoing.
+     * An event is ongoing if current time is between start and end dates.
+     *
+     * @return bool
      */
     public function isOngoing(): bool
     {
@@ -183,6 +245,9 @@ class Event extends Model
 
     /**
      * Check if the event is past.
+     * An event is past if its end date is in the past.
+     *
+     * @return bool
      */
     public function isPast(): bool
     {
@@ -191,6 +256,9 @@ class Event extends Model
 
     /**
      * Get the event's status.
+     * Returns 'upcoming', 'ongoing', or 'past' based on the event's dates.
+     *
+     * @return string
      */
     public function getStatusAttribute(): string
     {
@@ -204,7 +272,10 @@ class Event extends Model
     }
 
     /**
-     * تحويل عنوان الفعالية: تنظيف النص وجعل أول حرف من كل كلمة كبير
+     * Convert event title: clean text and capitalize first letter of each word.
+     * Accessor and mutator for the title attribute.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function title(): Attribute
     {
@@ -215,7 +286,10 @@ class Event extends Model
     }
 
     /**
-     * حساب مدة الفعالية بصيغة مقروءة
+     * Calculate event duration in readable format.
+     * Returns a human-readable time difference between start and end dates.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function duration(): Attribute
     {
@@ -227,26 +301,32 @@ class Event extends Model
     }
 
     /**
-     * تنسيق تاريخ الفعالية بطريقة سهلة القراءة
+     * Format event date in an easy-to-read way.
+     * Formats dates differently if they're on the same day or different days.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function formattedDate(): Attribute
     {
         return Attribute::make(
             get: function () {
-                // إذا كان التاريخ في نفس اليوم، أظهر الوقت فقط
+                // If dates are on the same day, show only time
                 if ($this->starts_at->isSameDay($this->ends_at)) {
                     return $this->starts_at->format('d M Y') . ' | ' .
                         $this->starts_at->format('H:i') . ' - ' .
                         $this->ends_at->format('H:i');
                 }
 
-                // إذا كان في أيام مختلفة
+                // If on different days
                 return $this->starts_at->format('d M Y H:i') . ' - ' .
                     $this->ends_at->format('d M Y H:i');
             }
         );
     }
 }
+
+
+
 
 
 

@@ -22,6 +22,10 @@ class ReservationController extends Controller
     {
         $this->reservationService = $reservationService;
     }
+    /**
+     * Summary of middleware
+     * @return array<Middleware|string>
+     */
     public static function middleware(): array
     {
         return [
@@ -35,6 +39,7 @@ class ReservationController extends Controller
 
     /**
      * Display a listing of the user's reservations.
+     * @return AnonymousResourceCollection
      */
     public function index(): AnonymousResourceCollection
     {
@@ -44,6 +49,8 @@ class ReservationController extends Controller
 
     /**
      * Store a newly created reservation in storage.
+     * @param \App\Http\Requests\Reservation\StoreReservationRequest $request
+     * @return JsonResponse|mixed
      */
     public function store(StoreReservationRequest $request): ReservationResource|JsonResponse
     {
@@ -64,6 +71,8 @@ class ReservationController extends Controller
 
     /**
      * Display the specified reservation.
+     * @param \App\Models\Reservation $reservation
+     * @return JsonResponse|mixed|ReservationResource
      */
     public function show(Reservation $reservation): ReservationResource|JsonResponse
     {
@@ -81,6 +90,9 @@ class ReservationController extends Controller
 
     /**
      * Update the specified reservation.
+     * @param \App\Http\Requests\Reservation\UpdateReservationRequest $request
+     * @param \App\Models\Reservation $reservation
+     * @return JsonResponse|mixed|ReservationResource
      */
     public function update(UpdateReservationRequest $request, Reservation $reservation): ReservationResource|JsonResponse
     {
@@ -111,6 +123,8 @@ class ReservationController extends Controller
 
     /**
      * Remove the specified reservation.
+     * @param \App\Models\Reservation $reservation
+     * @return JsonResponse|mixed
      */
     public function destroy(Reservation $reservation): JsonResponse
     {
@@ -138,6 +152,8 @@ class ReservationController extends Controller
 
     /**
      * Get all reservations for a specific event.
+     * @param \App\Models\Event $event
+     * @return AnonymousResourceCollection|JsonResponse|mixed
      */
     public function eventReservations(Event $event): AnonymousResourceCollection|JsonResponse
     {
@@ -152,6 +168,8 @@ class ReservationController extends Controller
 
     /**
      * Check if user has already reserved for an event.
+     * @param \App\Models\Event $event
+     * @return JsonResponse|mixed
      */
     public function checkReservation(Event $event): JsonResponse
     {
@@ -161,6 +179,7 @@ class ReservationController extends Controller
 
     /**
      * Get popular events based on reservation count.
+     * @return JsonResponse|mixed
      */
     public function popularEvents(): JsonResponse
     {

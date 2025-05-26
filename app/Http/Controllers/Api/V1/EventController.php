@@ -25,6 +25,10 @@ class EventController extends Controller
     {
         $this->eventService = $eventService;
     }
+    /**
+     * Summary of middleware
+     * @return array<Middleware|string>
+     */
     public static function middleware(): array
     {
         return [
@@ -34,7 +38,9 @@ class EventController extends Controller
     }
 
     /**
-     * Display a listing of the events.
+     * Display a listing of the events
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
@@ -62,8 +68,11 @@ class EventController extends Controller
         );
     }
 
+
     /**
      * Store a newly created event in storage.
+     * @param \App\Http\Requests\Event\StoreEventRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreEventRequest $request)
     {
@@ -82,8 +91,11 @@ class EventController extends Controller
         return $this->errorResponse('Failed to create event', 500);
     }
 
+
     /**
      * Display the specified event.
+     * @param \App\Models\Event $event
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(Event $event)
     {
@@ -98,8 +110,12 @@ class EventController extends Controller
         );
     }
 
+
     /**
-     * Update the specified event in storage.
+     * Summary of update
+     * @param \App\Http\Requests\Event\UpdateEventRequest $request
+     * @param \App\Models\Event $event
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(UpdateEventRequest $request, Event $event)
     {
@@ -121,9 +137,11 @@ class EventController extends Controller
             200
         );
     }
-
+    
     /**
      * Remove the specified event from storage.
+     * @param \App\Models\Event $event
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Event $event)
     {
@@ -138,8 +156,12 @@ class EventController extends Controller
         );
     }
 
+
     /**
      * Set a cover image for the event.
+     * @param \App\Http\Requests\Event\SetCoverImageRequest $request
+     * @param \App\Models\Event $event
+     * @return \Illuminate\Http\JsonResponse
      */
     public function setCoverImage(SetCoverImageRequest $request, Event $event)
     {
@@ -156,6 +178,8 @@ class EventController extends Controller
 
     /**
      * Get upcoming events.
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function upcoming(Request $request)
     {
@@ -171,6 +195,9 @@ class EventController extends Controller
 
     /**
      * Get events by type.
+     * @param \Illuminate\Http\Request $request
+     * @param mixed $typeId
+     * @return \Illuminate\Http\JsonResponse
      */
     public function byType(Request $request, $typeId)
     {
@@ -186,6 +213,9 @@ class EventController extends Controller
 
     /**
      * Get events by location.
+     * @param \Illuminate\Http\Request $request
+     * @param mixed $locationId
+     * @return \Illuminate\Http\JsonResponse
      */
     public function byLocation(Request $request, $locationId)
     {

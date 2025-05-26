@@ -20,6 +20,10 @@ class LocationController extends Controller
         $this->locationService = $locationService;
     }
 
+    /**
+     * Summary of middleware
+     * @return string[]
+     */
     public static function middleware(): array
     {
         return [
@@ -27,8 +31,10 @@ class LocationController extends Controller
             'role:admin'
         ];
     }
+
     /**
      * Display a listing of the resource.
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index()
     {
@@ -38,6 +44,8 @@ class LocationController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * @param \App\Http\Requests\Location\StoreLocationRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(StoreLocationRequest $request)
     {
@@ -51,6 +59,8 @@ class LocationController extends Controller
 
     /**
      * Display the specified resource.
+     * @param \App\Models\Location $location
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(Location $location)
     {
@@ -60,6 +70,9 @@ class LocationController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * @param \App\Http\Requests\Location\UpdateLocationRequest $request
+     * @param \App\Models\Location $location
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(UpdateLocationRequest $request, Location $location)
     {
@@ -74,6 +87,8 @@ class LocationController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * @param \App\Models\Location $location
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy(Location $location)
     {

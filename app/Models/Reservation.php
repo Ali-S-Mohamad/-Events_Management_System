@@ -100,19 +100,19 @@ class Reservation extends Model
     }
 
     /**
-     * حساب إجمالي عدد الضيوف (بما في ذلك صاحب الحجز)
+     * Calculate total number of attendees (including reservation owner)
      */
     protected function totalAttendees(): Attribute
     {
         return Attribute::make(
             get: function () {
-                return $this->guests_count + 1; // +1 لصاحب الحجز
+                return $this->guests_count + 1; // +1 for reservation owner
             }
         );
     }
 
     /**
-     * تنسيق تاريخ الحجز
+     * Format reservation creation date
      */
     protected function formattedCreatedAt(): Attribute
     {
@@ -123,5 +123,8 @@ class Reservation extends Model
         );
     }
 }
+
+
+
 
 
