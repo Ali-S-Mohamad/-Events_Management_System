@@ -19,6 +19,7 @@ class LocationResource extends JsonResource
             'name' => $this->name,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
+            'google_maps_url' => $this->google_maps_url,
             'cover_image' => new ImageResource($this->whenLoaded('coverImage')),
             'images' => ImageResource::collection($this->whenLoaded('images')),
             'created_at' => $this->created_at,

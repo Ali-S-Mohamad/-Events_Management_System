@@ -12,6 +12,7 @@ use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controllers\Middleware;
 
 class ReservationController extends Controller
 {
@@ -20,10 +21,16 @@ class ReservationController extends Controller
     public function __construct(ReservationService $reservationService)
     {
         $this->reservationService = $reservationService;
-        $this->middleware('permission:read-reservations')->only(['index', 'show', 'eventReservations']);
-        $this->middleware('permission:create-reservations')->only(['store']);
-        $this->middleware('permission:update-reservations')->only(['update']);
-        $this->middleware('permission:delete-reservations')->only(['destroy']);
+    }
+    public static function middleware(): array
+    {
+        return [
+            'auth',
+            new Middleware('permission:read-reservations', only:['index', 'show', 'eventReservations']),
+            new Middleware('permission:create-reservations', only:['store']),
+            new Middleware('permission:update-reservations', only:['update']),
+            new Middleware('permission:delete-reservations', only:['destroy']),
+        ];
     }
 
     /**
@@ -38,10 +45,21 @@ class ReservationController extends Controller
     /**
      * Store a newly created reservation in storage.
      */
-    public function store(StoreReservationRequest $request): ReservationResource
+    public function store(StoreReservationRequest $request): ReservationResource|JsonResponse
     {
+        // التحقق من عدم وجود حجز سابق للمستخدم في نفس الفعالية
+        $event = Event::findOrFail($request->event_id);
+        if ($this->reservationService->hasUserReserved($event)) {
+            return response()->json([
+                'message' => 'لديك حجز مسبق في هذه الفعالية'
+            ], 422);
+        }
+
         $reservation = $this->reservationService->create($request);
-        return new ReservationResource($reservation);
+        
+        return (new ReservationResource($reservation))
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
@@ -54,17 +72,41 @@ class ReservationController extends Controller
             return response()->json(['message' => 'غير مصرح لك بعرض هذا الحجز'], 403);
         }
 
-        $reservation->load(['event', 'user']);
+        $reservation->load(['event' => function($query) {
+            $query->with(['eventType', 'location']);
+        }, 'user']);
+        
         return new ReservationResource($reservation);
     }
 
     /**
      * Update the specified reservation.
      */
-    public function update(UpdateReservationRequest $request, Reservation $reservation): ReservationResource
+    public function update(UpdateReservationRequest $request, Reservation $reservation): ReservationResource|JsonResponse
     {
-        $reservation = $this->reservationService->update($request, $reservation);
-        return new ReservationResource($reservation);
+        // التحقق من إمكانية تعديل الحجز (الفعالية لم تبدأ بعد)
+        if (!$reservation->canBeCancelled()) {
+            return response()->json([
+                'message' => 'لا يمكن تعديل الحجز لأن الفعالية قد بدأت بالفعل'
+            ], 422);
+        }
+
+        try {
+            $reservation = $this->reservationService->update($request, $reservation);
+            
+            // التحقق مما إذا تم تغيير أي شيء
+            if ($reservation->isDirty()) {
+                return response()->json([
+                    'message' => 'لم يتم إجراء أي تغييرات'
+                ]);
+            }
+            
+            return new ReservationResource($reservation);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'حدث خطأ أثناء تحديث الحجز: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -77,8 +119,21 @@ class ReservationController extends Controller
             return response()->json(['message' => 'غير مصرح لك بحذف هذا الحجز'], 403);
         }
 
-        $this->reservationService->cancel($reservation);
-        return response()->json(['message' => 'تم إلغاء الحجز بنجاح']);
+        // التحقق من إمكانية إلغاء الحجز
+        if (!$reservation->canBeCancelled()) {
+            return response()->json([
+                'message' => 'لا يمكن إلغاء الحجز لأن الفعالية قد بدأت بالفعل'
+            ], 422);
+        }
+
+        try {
+            $this->reservationService->cancel($reservation);
+            return response()->json(['message' => 'تم إلغاء الحجز بنجاح']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'حدث خطأ أثناء إلغاء الحجز: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -103,5 +158,15 @@ class ReservationController extends Controller
         $hasReserved = $this->reservationService->hasUserReserved($event);
         return response()->json(['has_reserved' => $hasReserved]);
     }
+
+    /**
+     * Get popular events based on reservation count.
+     */
+    public function popularEvents(): JsonResponse
+    {
+        $events = $this->reservationService->getPopularEvents();
+        return response()->json(['data' => $events]);
+    }
 }
+
 

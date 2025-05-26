@@ -48,7 +48,44 @@ class User extends Authenticatable
         ];
     }
 
-    public function reservations() {
+    /**
+     * Get the reservations for the user.
+     */
+    public function reservations()
+    {
         return $this->hasMany(Reservation::class);
     }
+
+    /**
+     * Get the upcoming reservations for the user.
+     */
+    public function upcomingReservations()
+    {
+        return $this->hasMany(Reservation::class)
+            ->whereHas('event', function ($query) {
+                $query->where('starts_at', '>=', now());
+            });
+    }
+
+    /**
+     * Get the past reservations for the user.
+     */
+    public function pastReservations()
+    {
+        return $this->hasMany(Reservation::class)
+            ->whereHas('event', function ($query) {
+                $query->where('ends_at', '<', now());
+            });
+    }
+
+    /**
+     * Check if the user has reserved for a specific event.
+     */
+    public function hasReservedEvent(int $eventId): bool
+    {
+        return $this->reservations()
+            ->where('event_id', $eventId)
+            ->exists();
+    }
 }
+

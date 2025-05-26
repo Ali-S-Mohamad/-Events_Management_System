@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\ReservationCreated;
-use App\Events\ReservationCancelled;
 use App\Http\Requests\Reservation\StoreReservationRequest;
 use App\Http\Requests\Reservation\UpdateReservationRequest;
 use App\Models\Event;
@@ -19,8 +17,12 @@ class ReservationService
      */
     public function getUserReservations()
     {
-        return Reservation::where('user_id', Auth::id())
-            ->with(['event', 'event.eventType', 'event.location'])
+        return Reservation::forCurrentUser()
+            ->with([
+                'event' => function ($query) {
+                    $query->with(['eventType', 'location', 'coverImage']);
+                }
+            ])
             ->latest()
             ->get();
     }
@@ -48,13 +50,15 @@ class ReservationService
                 'guests_count' => $request->guests_count,
             ]);
 
-            // إطلاق حدث إنشاء الحجز
-            event(new ReservationCreated($reservation));
-
             return $reservation;
         });
 
-        return $reservation->load(['event', 'user']);
+        return $reservation->load([
+            'event' => function ($query) {
+                $query->with(['eventType', 'location']);
+            },
+            'user'
+        ]);
     }
 
     /**
@@ -62,11 +66,24 @@ class ReservationService
      */
     public function update(UpdateReservationRequest $request, Reservation $reservation): Reservation
     {
-        $reservation->update([
-            'guests_count' => $request->guests_count,
-        ]);
+        // تخزين حالة التغيير قبل التحديث
+        $wasChanged = false;
 
-        return $reservation->load(['event', 'user']);
+        if ($reservation->guests_count != $request->guests_count) {
+            $reservation->guests_count = $request->guests_count;
+            $wasChanged = true;
+        }
+
+        if ($wasChanged) {
+            $reservation->save();
+        }
+
+        return $reservation->load([
+            'event' => function ($query) {
+                $query->with(['eventType', 'location']);
+            },
+            'user'
+        ]);
     }
 
     /**
@@ -74,11 +91,11 @@ class ReservationService
      */
     public function cancel(Reservation $reservation): void
     {
+        if (!$reservation->canBeCancelled()) {
+            throw new \Exception('لا يمكن إلغاء الحجز لأن الفعالية قد بدأت بالفعل.');
+        }
+
         DB::transaction(function () use ($reservation) {
-            // إطلاق حدث إلغاء الحجز
-            event(new ReservationCancelled($reservation));
-            
-            // حذف الحجز
             $reservation->delete();
         });
     }
@@ -92,4 +109,33 @@ class ReservationService
             ->where('user_id', Auth::id())
             ->exists();
     }
+
+    /**
+     * Get the most popular events based on reservation count.
+     */
+    public function getPopularEvents(int $limit = 5)
+    {
+        return Event::withCount('reservations')
+            ->orderByDesc('reservations_count')
+            ->upcoming()
+            ->with(['eventType', 'location', 'coverImage'])
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Get events with available spots.
+     */
+    public function getEventsWithAvailableSpots(int $limit = 10)
+    {
+        return Event::withCount('reservations')
+            ->upcoming()
+            ->whereRaw('(SELECT COUNT(*) FROM reservations WHERE reservations.event_id = events.id) < ?', [50]) // افتراض أن الحد الأقصى هو 50
+            ->with(['eventType', 'location', 'coverImage'])
+            ->orderBy('starts_at')
+            ->limit($limit)
+            ->get();
+    }
 }
+
+

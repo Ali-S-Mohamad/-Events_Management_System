@@ -25,7 +25,7 @@ class UpdateReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'guests_count' => 'required|integer|min:1',
+            'guests_count' => 'required|integer|min:1|max:10',
         ];
     }
 
@@ -40,6 +40,7 @@ class UpdateReservationRequest extends FormRequest
             'guests_count.required' => 'يجب تحديد عدد الضيوف',
             'guests_count.integer' => 'عدد الضيوف يجب أن يكون رقمًا صحيحًا',
             'guests_count.min' => 'عدد الضيوف يجب أن يكون على الأقل 1',
+            'guests_count.max' => 'عدد الضيوف يجب أن لا يتجاوز 10',
         ];
     }
 }

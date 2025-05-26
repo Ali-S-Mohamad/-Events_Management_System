@@ -20,7 +20,10 @@ class EventResource extends JsonResource
             'description' => $this->description,
             'starts_at' => $this->starts_at,
             'ends_at' => $this->ends_at,
+            'formatted_date' => $this->formatted_date,
+            'duration' => $this->duration,
             'status' => $this->status,
+            'available_spots' => $this->availableSpots(),
             'event_type' => new EventTypeResource($this->whenLoaded('eventType')),
             'location' => new LocationResource($this->whenLoaded('location')),
             'cover_image' => new ImageResource($this->whenLoaded('coverImage')),
@@ -33,3 +36,4 @@ class EventResource extends JsonResource
         ];
     }
 }
+

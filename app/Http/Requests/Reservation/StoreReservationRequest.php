@@ -24,8 +24,17 @@ class StoreReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'event_id' => 'required|exists:events,id',
-            'guests_count' => 'required|integer|min:1',
+            'event_id' => [
+                'required',
+                'exists:events,id',
+                function ($attribute, $value, $fail) {
+                    $event = Event::find($value);
+                    if ($event && $event->ends_at < now()) {
+                        $fail('لا يمكن الحجز في فعالية منتهية.');
+                    }
+                },
+            ],
+            'guests_count' => 'required|integer|min:1|max:10',
         ];
     }
 
@@ -42,6 +51,7 @@ class StoreReservationRequest extends FormRequest
             'guests_count.required' => 'يجب تحديد عدد الضيوف',
             'guests_count.integer' => 'عدد الضيوف يجب أن يكون رقمًا صحيحًا',
             'guests_count.min' => 'عدد الضيوف يجب أن يكون على الأقل 1',
+            'guests_count.max' => 'عدد الضيوف يجب أن لا يتجاوز 10',
         ];
     }
 }

@@ -5,21 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Event extends Model
 {
     protected $fillable = [
-        'title', 
-        'description', 
-        'event_type_id', 
-        'location_id', 
-        'starts_at', 
+        'title',
+        'description',
+        'event_type_id',
+        'location_id',
+        'starts_at',
         'ends_at',
         'user_id'
     ];
-    
+
     protected $dates = ['starts_at', 'ends_at'];
-    
+
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
@@ -45,7 +46,7 @@ class Event extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Get the event type of the event.
      */
@@ -53,7 +54,7 @@ class Event extends Model
     {
         return $this->belongsTo(EventType::class, 'event_type_id');
     }
-    
+
     /**
      * Get the location of the event.
      */
@@ -61,7 +62,7 @@ class Event extends Model
     {
         return $this->belongsTo(Location::class);
     }
-    
+
     /**
      * Get the reservations for the event.
      */
@@ -69,7 +70,50 @@ class Event extends Model
     {
         return $this->hasMany(Reservation::class);
     }
-    
+
+    /**
+     * Get the latest reservation for the event.
+     */
+    public function latestReservation()
+    {
+        return $this->hasOne(Reservation::class)->latestOfMany();
+    }
+
+    /**
+     * Get the oldest reservation for the event.
+     */
+    public function oldestReservation()
+    {
+        return $this->hasOne(Reservation::class)->oldestOfMany();
+    }
+
+    /**
+     * Get the reservation with the most guests.
+     */
+    public function largestReservation()
+    {
+        return $this->hasOne(Reservation::class)->ofMany('guests_count', 'max');
+    }
+
+    /**
+     * Check if the event is fully booked.
+     * Assuming a maximum capacity of 50 attendees.
+     */
+    public function isFullyBooked(): bool
+    {
+        return $this->reservations()->sum('guests_count') >= 50;
+    }
+
+    /**
+     * Get the number of available spots.
+     * Assuming a maximum capacity of 50 attendees.
+     */
+    public function availableSpots(): int
+    {
+        $reserved = $this->reservations()->sum('guests_count');
+        return max(0, 50 - $reserved);
+    }
+
     /**
      * Get all images for the event.
      */
@@ -84,8 +128,8 @@ class Event extends Model
     public function coverImage(): MorphOne
     {
         return $this->morphOne(Image::class, 'imageable')
-                    ->where('is_cover', true)
-                    ->latestOfMany();
+            ->where('is_cover', true)
+            ->latestOfMany();
     }
 
     /**
@@ -158,4 +202,52 @@ class Event extends Model
             return 'past';
         }
     }
+
+    /**
+     * تحويل عنوان الفعالية: تنظيف النص وجعل أول حرف من كل كلمة كبير
+     */
+    protected function title(): Attribute
+    {
+        return Attribute::make(
+            get: fn (string $value) => ucwords($value),
+            set: fn (string $value) => trim($value)
+        );
+    }
+
+    /**
+     * حساب مدة الفعالية بصيغة مقروءة
+     */
+    protected function duration(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->starts_at->diffForHumans($this->ends_at, true);
+            }
+        );
+    }
+
+    /**
+     * تنسيق تاريخ الفعالية بطريقة سهلة القراءة
+     */
+    protected function formattedDate(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // إذا كان التاريخ في نفس اليوم، أظهر الوقت فقط
+                if ($this->starts_at->isSameDay($this->ends_at)) {
+                    return $this->starts_at->format('d M Y') . ' | ' .
+                        $this->starts_at->format('H:i') . ' - ' .
+                        $this->ends_at->format('H:i');
+                }
+
+                // إذا كان في أيام مختلفة
+                return $this->starts_at->format('d M Y H:i') . ' - ' .
+                    $this->ends_at->format('d M Y H:i');
+            }
+        );
+    }
 }
+
+
+
+

@@ -25,6 +25,12 @@ class ReservationResource extends JsonResource
                     'title' => $this->event->title,
                     'starts_at' => $this->event->starts_at,
                     'ends_at' => $this->event->ends_at,
+                    'location' => $this->whenLoaded('event.location', function() {
+                        return [
+                            'id' => $this->event->location->id,
+                            'name' => $this->event->location->name,
+                        ];
+                    }),
                 ];
             }),
             'user' => $this->whenLoaded('user', function() {
@@ -34,6 +40,7 @@ class ReservationResource extends JsonResource
                     'email' => $this->user->email,
                 ];
             }),
+            'is_new' => $this->when($this->wasRecentlyCreated, true),
         ];
     }
 }

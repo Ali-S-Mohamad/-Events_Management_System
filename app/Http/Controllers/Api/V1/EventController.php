@@ -127,12 +127,12 @@ class EventController extends Controller
      */
     public function destroy(Event $event)
     {
-        $this->authorize('delete', $event);
+        Gate::authorize('delete', $event);
         
         $this->eventService->delete($event);
         
         return $this->apiResponse(
-            null,
+            new EventResource($event),
             'Event deleted successfully',
             200
         );
@@ -143,7 +143,7 @@ class EventController extends Controller
      */
     public function setCoverImage(SetCoverImageRequest $request, Event $event)
     {
-        $this->authorize('setCoverImage', $event);
+        Gate::authorize('setCoverImage', $event);
         
         $event = $this->eventService->setCoverImage($event, $request->image_id);
         
