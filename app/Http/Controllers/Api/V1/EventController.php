@@ -1,0 +1,204 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Models\Event;
+use Illuminate\Http\Request;
+use App\Services\EventService;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
+use App\Http\Resources\EventResource;
+use App\Http\Resources\EventCollection;
+use App\Http\Requests\Event\StoreEventRequest;
+use Illuminate\Routing\Controllers\Middleware;
+use App\Http\Requests\Event\UpdateEventRequest;
+use App\Http\Requests\Event\SetCoverImageRequest;
+
+class EventController extends Controller
+{
+    protected EventService $eventService;
+
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(EventService $eventService)
+    {
+        $this->eventService = $eventService;
+    }
+    public static function middleware(): array
+    {
+        return [
+            'auth',
+            new Middleware('role:admin|organizer', only:['store', 'update', 'destroy', 'setCoverImage'])
+        ];
+    }
+
+    /**
+     * Display a listing of the events.
+     */
+    public function index(Request $request)
+    {
+        $filters = $request->only([
+            'event_type_id',
+            'location_id',
+            'status',
+            'search',
+            'sort_by',
+            'sort_direction',
+            'per_page'
+        ]);
+
+
+        if (auth()->user()->hasRole('organizer') && !auth()->user()->hasRole('admin')) {
+            $filters['user_id'] = auth()->id();
+        }
+
+        $events = $this->eventService->list($filters);
+        
+        return $this->apiResponse(
+            new EventCollection($events), 
+            'Events retrieved successfully', 
+            200
+        );
+    }
+
+    /**
+     * Store a newly created event in storage.
+     */
+    public function store(StoreEventRequest $request)
+    {
+        Gate::authorize('create', Event::class);
+        
+        $event = $this->eventService->create($request);
+        
+        if ($event->wasRecentlyCreated) {
+            return $this->successResponse(
+                new EventResource($event),
+                'Event created successfully',
+                201
+            );
+        }
+        
+        return $this->errorResponse('Failed to create event', 500);
+    }
+
+    /**
+     * Display the specified event.
+     */
+    public function show(Event $event)
+    {
+        Gate::authorize('view', $event);
+        
+        $event = $this->eventService->show($event);
+        
+        return $this->apiResponse(
+            new EventResource($event),
+            'Event retrieved successfully',
+            200
+        );
+    }
+
+    /**
+     * Update the specified event in storage.
+     */
+    public function update(UpdateEventRequest $request, Event $event)
+    {
+        Gate::authorize('update', $event);
+        
+        $updatedEvent = $this->eventService->update($event, $request);
+        
+        if ($event->isDirty()) {
+            return $this->apiResponse(
+                new EventResource($updatedEvent),
+                'Event updated successfully',
+                200
+            );
+        }
+        
+        return $this->apiResponse(
+            new EventResource($updatedEvent),
+            'No changes were made to the event',
+            200
+        );
+    }
+
+    /**
+     * Remove the specified event from storage.
+     */
+    public function destroy(Event $event)
+    {
+        $this->authorize('delete', $event);
+        
+        $this->eventService->delete($event);
+        
+        return $this->apiResponse(
+            null,
+            'Event deleted successfully',
+            200
+        );
+    }
+
+    /**
+     * Set a cover image for the event.
+     */
+    public function setCoverImage(SetCoverImageRequest $request, Event $event)
+    {
+        $this->authorize('setCoverImage', $event);
+        
+        $event = $this->eventService->setCoverImage($event, $request->image_id);
+        
+        return $this->apiResponse(
+            new EventResource($event),
+            'Cover image set successfully',
+            200
+        );
+    }
+
+    /**
+     * Get upcoming events.
+     */
+    public function upcoming(Request $request)
+    {
+        $limit = $request->input('limit', 5);
+        $events = $this->eventService->getUpcomingEvents($limit);
+        
+        return $this->apiResponse(
+            EventResource::collection($events),
+            'Upcoming events retrieved successfully',
+            200
+        );
+    }
+
+    /**
+     * Get events by type.
+     */
+    public function byType(Request $request, $typeId)
+    {
+        $limit = $request->input('limit', 10);
+        $events = $this->eventService->getEventsByType($typeId, $limit);
+        
+        return $this->apiResponse(
+            EventResource::collection($events),
+            'Events by type retrieved successfully',
+            200
+        );
+    }
+
+    /**
+     * Get events by location.
+     */
+    public function byLocation(Request $request, $locationId)
+    {
+        $limit = $request->input('limit', 10);
+        $events = $this->eventService->getEventsByLocation($locationId, $limit);
+        
+        return $this->apiResponse(
+            EventResource::collection($events),
+            'Events by location retrieved successfully',
+            200
+        );
+    }
+}
+
+
+
